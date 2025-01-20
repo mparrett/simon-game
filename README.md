@@ -1,3 +1,7 @@
+# Simon Game
+
+Please visit the [game page](https://mparrett.github.io/simon-game/) to give it a shot!
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
