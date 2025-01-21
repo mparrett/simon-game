@@ -2,7 +2,7 @@
   "name": "simon-game",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://fun.parrett.us/simon-game",
+  "homepage": "https://fun.parrett.us/simon-game/#",
   "type": "module",
   "scripts": {
     "dev": "vite",
