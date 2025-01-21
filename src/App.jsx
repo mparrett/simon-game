@@ -1,16 +1,16 @@
 import './App.css'
 
-import { BrowserRouter as Router } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom'; // Note 1
 
 import SimonGame from './components/SimonGame'
 
 function App() {
 	return (
-		<Router basename="/simon-game">
+		<HashRouter basename="/simon-game">
 			<div className="min-h-screen bg-gray-100 dark:bg-gray-800 p-4">
 				<SimonGame />
 			</div>
-		</Router>
+		</HashRouter>
 	)
 }
 
