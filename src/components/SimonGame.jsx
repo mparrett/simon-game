@@ -15,6 +15,12 @@ const SimonGame = () => {
   const [countdown, setCountdown] = useState(null);
 
   const colors = ['red', 'blue', 'green', 'yellow'];
+  const baseShowColorDelay = 750;
+  const basePauseBetweenColorsDelay = 250;
+  const speedIncreaseFactor = 0.05;
+  const minShowColorDelay = 200;
+  const minPauseBetweenColorsDelay = 100;
+
   const colorMap = {
     red: 'bg-red-500',
     blue: 'bg-blue-500',
@@ -62,6 +68,9 @@ const SimonGame = () => {
     // Wait a brief moment before starting sequence
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    const currentShowColorDelay = Math.max(minShowColorDelay, baseShowColorDelay / (1 + sequence.length * speedIncreaseFactor));
+    const currentPauseBetweenColorsDelay = Math.max(minPauseBetweenColorsDelay, basePauseBetweenColorsDelay / (1 + sequence.length * speedIncreaseFactor));
+
     for (let i = 0; i < sequence.length; i++) {
       const button = document.querySelector(`[data-color="${sequence[i]}"]`);
       if (button) {
@@ -70,18 +79,18 @@ const SimonGame = () => {
         playSound(soundMap[sequence[i]]);
 
         // Wait longer to show each color
-        await new Promise(resolve => setTimeout(resolve, 750));
+        await new Promise(resolve => setTimeout(resolve, currentShowColorDelay));
 
         // Reset opacity
         button.style.opacity = '0.5';
 
         // Pause between colors
-        await new Promise(resolve => setTimeout(resolve, 250));
+        await new Promise(resolve => setTimeout(resolve, currentPauseBetweenColorsDelay));
       }
     }
 
     setIsShowingSequence(false);
-  }, [sequence]);
+  }, [sequence, baseShowColorDelay, basePauseBetweenColorsDelay, speedIncreaseFactor, minShowColorDelay, minPauseBetweenColorsDelay]);
 
   const handleColorClick = (color) => {
     if (isShowingSequence || !isPlaying) return;
