@@ -242,21 +242,23 @@ const SimonGame = () => {
             </div>
           </div>
 
-          {countdown !== null && (
-            <div className="text-center">
-              <span className="text-4xl font-bold">
-                {countdown > 0 ? countdown : 'Go!'}
-              </span>
-            </div>
-          )}
+          <div className="h-20 flex items-center justify-center">
+            {countdown !== null && (
+              <div className="text-center">
+                <span className="text-4xl font-bold">
+                  {countdown > 0 ? countdown : 'Go!'}
+                </span>
+              </div>
+            )}
 
-          {gameOver && (
-            <Alert>
-              <AlertDescription>
-                Game Over! Final Score: {currentScore}
-              </AlertDescription>
-            </Alert>
-          )}
+            {gameOver && (
+              <Alert>
+                <AlertDescription>
+                  Game Over! Final Score: {currentScore}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
             {colors.map(color => (
