@@ -242,35 +242,42 @@ const SimonGame = () => {
             </div>
           </div>
 
-          <div className="h-20 flex items-center justify-center">
+          <div className="relative max-w-md mx-auto">
+            {/* Game Board */}
+            <div className="grid grid-cols-2 gap-4">
+              {colors.map(color => (
+                <button
+                  key={color}
+                  data-color={color}
+                  disabled={!isPlaying || isShowingSequence}
+                  onClick={() => handleColorClick(color)}
+                  className={`${colorMap[color]} h-32 rounded-lg opacity-50 transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed`}
+                  aria-label={`${color} button`}
+                />
+              ))}
+            </div>
+
+            {/* Countdown Overlay */}
             {countdown !== null && (
-              <div className="text-center">
-                <span className="text-4xl font-bold">
-                  {countdown > 0 ? countdown : 'Go!'}
-                </span>
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+                <div className="bg-white bg-opacity-95 rounded-xl px-8 py-6 shadow-lg">
+                  <span className="text-4xl font-bold text-gray-800">
+                    {countdown > 0 ? countdown : 'Go!'}
+                  </span>
+                </div>
               </div>
             )}
 
+            {/* Game Over Overlay */}
             {gameOver && (
-              <Alert>
-                <AlertDescription>
-                  Game Over! Final Score: {currentScore}
-                </AlertDescription>
-              </Alert>
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
+                <div className="bg-white bg-opacity-95 rounded-xl px-6 py-4 shadow-lg max-w-xs">
+                  <p className="text-lg font-semibold text-gray-800 text-center">
+                    Game Over! Final Score: {currentScore}
+                  </p>
+                </div>
+              </div>
             )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-            {colors.map(color => (
-              <button
-                key={color}
-                data-color={color}
-                disabled={!isPlaying || isShowingSequence}
-                onClick={() => handleColorClick(color)}
-                className={`${colorMap[color]} h-32 rounded-lg opacity-50 transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed`}
-                aria-label={`${color} button`}
-              />
-            ))}
           </div>
 
           <div className="text-center">
