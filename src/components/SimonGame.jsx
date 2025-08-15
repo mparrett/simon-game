@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
 
@@ -14,20 +14,20 @@ const SimonGame = () => {
   const [currentScore, setCurrentScore] = useState(0);
   const [countdown, setCountdown] = useState(null);
 
-  const colors = ['red', 'blue', 'green', 'yellow'];
-  const colorMap = {
+  const colors = useMemo(() => ['red', 'blue', 'green', 'yellow'], []);
+  const colorMap = useMemo(() => ({
     red: 'bg-red-500',
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     yellow: 'bg-yellow-500'
-  };
+  }), []);
 
-  const soundMap = {
+  const soundMap = useMemo(() => ({
     red: 261.63,    // C4
     blue: 329.63,   // E4
     green: 392.00,  // G4
     yellow: 523.25  // C5
-  };
+  }), []);
 
   const playSound = (frequency) => {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -50,11 +50,54 @@ const SimonGame = () => {
     }, 500);
   };
 
+  const playStartButtonSound = () => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'square';
+    oscillator.frequency.value = 440; // A4
+    gainNode.gain.value = 0.05;
+
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.2);
+
+    setTimeout(() => {
+      oscillator.stop();
+      audioContext.close();
+    }, 200);
+  };
+
+  const playCountdownSound = (count) => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'triangle';
+    // Higher pitch for countdown numbers, lower for "Go!"
+    oscillator.frequency.value = count > 0 ? 800 : 600;
+    gainNode.gain.value = 0.08;
+
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
+
+    setTimeout(() => {
+      oscillator.stop();
+      audioContext.close();
+    }, 300);
+  };
+
   const addToSequence = useCallback(() => {
     const newColor = colors[Math.floor(Math.random() * colors.length)];
     setSequence(prev => [...prev, newColor]);
     setCurrentScore(prev => prev + 1);
-  }, []);
+  }, [colors]);
 
   const playSequence = useCallback(async () => {
     setIsShowingSequence(true);
@@ -81,7 +124,7 @@ const SimonGame = () => {
     }
 
     setIsShowingSequence(false);
-  }, [sequence]);
+  }, [sequence, soundMap]);
 
   const handleColorClick = (color) => {
     if (isShowingSequence || !isPlaying) return;
@@ -124,6 +167,7 @@ const SimonGame = () => {
     if (gameCount >= 10) {
       return;
     }
+    playStartButtonSound();
     setSequence([]);
     setPlayerSequence([]);
     setGameOver(false);
@@ -133,6 +177,9 @@ const SimonGame = () => {
 
   useEffect(() => {
     if (countdown === null) return;
+
+    // Play countdown sound
+    playCountdownSound(countdown);
 
     if (countdown > 0) {
       const timer = setTimeout(() => {
