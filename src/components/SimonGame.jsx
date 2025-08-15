@@ -221,11 +221,11 @@ const SimonGame = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto p-6">
-      <CardContent>
-        <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold">Simon Game</h2>
+    <Card className="w-full max-w-2xl mx-auto shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+      <CardContent className="p-4 sm:p-6 lg:p-8">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="text-center space-y-3">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Simon Game</h2>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="font-semibold">Games</p>

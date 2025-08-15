@@ -4,7 +4,7 @@ import SimonGame from './components/SimonGame'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 px-4 pt-2 pb-4">
       <SimonGame />
     </div>
   )
