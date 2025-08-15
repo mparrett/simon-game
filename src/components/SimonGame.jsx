@@ -221,7 +221,7 @@ const SimonGame = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 backdrop-blur-sm">
       <CardContent className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
