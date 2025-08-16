@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { Alert, AlertDescription } from './ui/alert';
 
 const SimonGame = () => {
   const [sequence, setSequence] = useState([]);
@@ -15,6 +14,7 @@ const SimonGame = () => {
   const [countdown, setCountdown] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [activeColors, setActiveColors] = useState(new Set());
 
   const colors = useMemo(() => ['red', 'blue', 'green', 'yellow'], []);
   const colorMap = useMemo(() => ({
@@ -152,10 +152,23 @@ const SimonGame = () => {
     setIsFlashing(false);
   }, []);
 
+  const endGame = useCallback((won) => {
+    setIsPlaying(false);
+    setGameOver(true);
+    setTimeLeft(null); // Clear any active timer
+    setIsFlashing(false);
+    setGameHistory(prev => [...prev, {
+      gameNumber: gameCount + 1,
+      score: currentScore,
+      won
+    }]);
+    setGameCount(prev => prev + 1);
+  }, [gameCount, currentScore]);
+
   const timeoutGame = useCallback(() => {
     playTimeoutSound();
     endGame(false);
-  }, []);
+  }, [playTimeoutSound, endGame]);
 
   const addToSequence = useCallback(() => {
     const newColor = colors[Math.floor(Math.random() * colors.length)];
@@ -170,26 +183,25 @@ const SimonGame = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     for (let i = 0; i < sequence.length; i++) {
-      const button = document.querySelector(`[data-color="${sequence[i]}"]`);
-      if (button) {
-        // Make button fully visible during flash
-        button.style.opacity = '1';
-        playSound(soundMap[sequence[i]]);
+      const color = sequence[i];
+      
+      // Make button fully visible during flash
+      setActiveColors(new Set([color]));
+      playSound(soundMap[color]);
 
-        // Wait longer to show each color
-        await new Promise(resolve => setTimeout(resolve, 750));
+      // Wait longer to show each color
+      await new Promise(resolve => setTimeout(resolve, 750));
 
-        // Reset opacity
-        button.style.opacity = '0.5';
+      // Reset opacity
+      setActiveColors(new Set());
 
-        // Pause between colors
-        await new Promise(resolve => setTimeout(resolve, 250));
-      }
+      // Pause between colors
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     setIsShowingSequence(false);
     startTimer(); // Start the countdown timer for player input
-  }, [sequence, soundMap, startTimer]);
+  }, [sequence, soundMap, startTimer, playSound]);
 
   const handleColorClick = (color) => {
     if (isShowingSequence || !isPlaying) return;
@@ -198,13 +210,11 @@ const SimonGame = () => {
     setTimeLeft(null);
     setIsFlashing(false);
 
-    const button = document.querySelector(`[data-color="${color}"]`);
-    if (button) {
-      button.style.opacity = '1';
-      setTimeout(() => {
-        button.style.opacity = '0.5';
-      }, 200);
-    }
+    // Flash the button using React state
+    setActiveColors(new Set([color]));
+    setTimeout(() => {
+      setActiveColors(new Set());
+    }, 200);
 
     const newPlayerSequence = [...playerSequence, color];
     setPlayerSequence(newPlayerSequence);
@@ -260,7 +270,7 @@ const SimonGame = () => {
       setIsPlaying(true);
       addToSequence();
     }
-  }, [countdown, addToSequence]);
+  }, [countdown, addToSequence, playCountdownSound]);
 
   // Timer useEffect for player response time limit
   useEffect(() => {
@@ -281,20 +291,7 @@ const SimonGame = () => {
       // Time's up!
       timeoutGame();
     }
-  }, [timeLeft, isPlaying, isShowingSequence, timeoutGame]);
-
-  const endGame = (won) => {
-    setIsPlaying(false);
-    setGameOver(true);
-    setTimeLeft(null); // Clear any active timer
-    setIsFlashing(false);
-    setGameHistory(prev => [...prev, {
-      gameNumber: gameCount + 1,
-      score: currentScore,
-      won
-    }]);
-    setGameCount(prev => prev + 1);
-  };
+  }, [timeLeft, isPlaying, isShowingSequence, timeoutGame, playCountdownSound]);
 
   useEffect(() => {
     if (sequence.length > 0 && isPlaying) {
@@ -356,7 +353,9 @@ const SimonGame = () => {
                   data-color={color}
                   disabled={!isPlaying || isShowingSequence}
                   onClick={() => handleColorClick(color)}
-                  className={`${colorMap[color]} h-32 rounded-lg opacity-50 transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed`}
+                  className={`${colorMap[color]} h-32 rounded-lg transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed ${
+                    activeColors.has(color) ? 'opacity-100' : 'opacity-50'
+                  }`}
                   aria-label={`${color} button`}
                 />
               ))}
