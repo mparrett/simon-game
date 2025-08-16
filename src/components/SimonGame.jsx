@@ -13,6 +13,8 @@ const SimonGame = () => {
   const [gameOver, setGameOver] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const [countdown, setCountdown] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isFlashing, setIsFlashing] = useState(false);
 
   const colors = useMemo(() => ['red', 'blue', 'green', 'yellow'], []);
   const colorMap = useMemo(() => ({
@@ -93,6 +95,37 @@ const SimonGame = () => {
     }, 300);
   };
 
+  const playTimeoutSound = () => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.value = 200; // Low, ominous tone
+    gainNode.gain.value = 0.1;
+
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.8);
+
+    setTimeout(() => {
+      oscillator.stop();
+      audioContext.close();
+    }, 800);
+  };
+
+  const startTimer = useCallback(() => {
+    setTimeLeft(6); // 6 seconds to respond
+    setIsFlashing(false);
+  }, []);
+
+  const timeoutGame = useCallback(() => {
+    playTimeoutSound();
+    endGame(false);
+  }, []);
+
   const addToSequence = useCallback(() => {
     const newColor = colors[Math.floor(Math.random() * colors.length)];
     setSequence(prev => [...prev, newColor]);
@@ -124,10 +157,15 @@ const SimonGame = () => {
     }
 
     setIsShowingSequence(false);
-  }, [sequence, soundMap]);
+    startTimer(); // Start the countdown timer for player input
+  }, [sequence, soundMap, startTimer]);
 
   const handleColorClick = (color) => {
     if (isShowingSequence || !isPlaying) return;
+
+    // Clear the timer since player made a move
+    setTimeLeft(null);
+    setIsFlashing(false);
 
     const button = document.querySelector(`[data-color="${color}"]`);
     if (button) {
@@ -193,9 +231,32 @@ const SimonGame = () => {
     }
   }, [countdown, addToSequence]);
 
+  // Timer useEffect for player response time limit
+  useEffect(() => {
+    if (timeLeft === null || !isPlaying || isShowingSequence) return;
+
+    if (timeLeft <= 3 && timeLeft > 0) {
+      // Start flashing when 3 seconds or less remain
+      setIsFlashing(true);
+      playCountdownSound(timeLeft);
+    }
+
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0) {
+      // Time's up!
+      timeoutGame();
+    }
+  }, [timeLeft, isPlaying, isShowingSequence, timeoutGame]);
+
   const endGame = (won) => {
     setIsPlaying(false);
     setGameOver(true);
+    setTimeLeft(null); // Clear any active timer
+    setIsFlashing(false);
     setGameHistory(prev => [...prev, {
       gameNumber: gameCount + 1,
       score: currentScore,
@@ -240,11 +301,18 @@ const SimonGame = () => {
                 <p>{getHighScore()}</p>
               </div>
             </div>
+            {timeLeft !== null && (
+              <div className="text-center mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Time left: <span className={`font-mono ${timeLeft <= 3 ? 'text-red-500 font-bold' : 'text-blue-500'}`}>{timeLeft}s</span>
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="relative max-w-md mx-auto">
             {/* Game Board */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid grid-cols-2 gap-4 transition-all duration-300 ${isFlashing ? 'ring-4 ring-red-500 ring-opacity-60' : ''}`}>
               {colors.map(color => (
                 <button
                   key={color}
@@ -275,6 +343,15 @@ const SimonGame = () => {
                   <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
                     Game Over! Final Score: {currentScore}
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* Timer Countdown Overlay */}
+            {timeLeft !== null && timeLeft <= 3 && timeLeft > 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className={`text-6xl font-bold ${timeLeft === 1 ? 'text-red-600' : timeLeft === 2 ? 'text-orange-500' : 'text-yellow-500'} drop-shadow-lg animate-pulse`}>
+                  {timeLeft}
                 </div>
               </div>
             )}
