@@ -221,12 +221,12 @@ const SimonGame = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 backdrop-blur-sm">
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
       <CardContent className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Simon Game</h2>
-            <div className="grid grid-cols-3 gap-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
+            <div className="grid grid-cols-3 gap-4 text-gray-700 dark:text-gray-300">
               <div>
                 <p className="font-semibold">Games</p>
                 <p>{gameCount}/10</p>
@@ -260,8 +260,8 @@ const SimonGame = () => {
             {/* Countdown Overlay */}
             {countdown !== null && (
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-                <div className="bg-white bg-opacity-95 rounded-xl px-8 py-6 shadow-lg">
-                  <span className="text-4xl font-bold text-gray-800">
+                <div className="bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 rounded-xl px-8 py-6 shadow-lg">
+                  <span className="text-4xl font-bold text-gray-800 dark:text-gray-100">
                     {countdown > 0 ? countdown : 'Go!'}
                   </span>
                 </div>
@@ -271,8 +271,8 @@ const SimonGame = () => {
             {/* Game Over Overlay */}
             {gameOver && (
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-                <div className="bg-white bg-opacity-95 rounded-xl px-6 py-4 shadow-lg max-w-xs">
-                  <p className="text-lg font-semibold text-gray-800 text-center">
+                <div className="bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 rounded-xl px-6 py-4 shadow-lg max-w-xs">
+                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
                     Game Over! Final Score: {currentScore}
                   </p>
                 </div>
@@ -292,12 +292,12 @@ const SimonGame = () => {
 
           {gameHistory.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-xl font-bold mb-2">Game History</h3>
+              <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Game History</h3>
               <div className="space-y-2">
                 {gameHistory.map((game, index) => (
                   <div
                     key={index}
-                    className={`p-2 rounded ${game.won ? 'bg-green-100' : 'bg-red-100'}`}
+                    className={`p-2 rounded text-gray-800 dark:text-gray-100 ${game.won ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
                   >
                     Game {game.gameNumber}: Score {game.score} - {game.won ? 'Won!' : 'Lost'}
                   </div>
