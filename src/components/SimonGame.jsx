@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Alert, AlertDescription } from './ui/alert';
@@ -31,90 +31,121 @@ const SimonGame = () => {
     yellow: 523.25  // C5
   }), []);
 
-  const playSound = (frequency) => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  // Shared AudioContext hook to prevent memory leaks
+  const audioContextRef = useRef(null);
+  
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+  // Cleanup AudioContext on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency;
-    gainNode.gain.value = 0.1;
+  const playSound = useCallback((frequency) => {
+    try {
+      const audioContext = getAudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
-    oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    setTimeout(() => {
-      oscillator.stop();
-      audioContext.close();
-    }, 500);
-  };
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gainNode.gain.value = 0.1;
 
-  const playStartButtonSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+      setTimeout(() => {
+        oscillator.stop();
+      }, 500);
+    } catch (error) {
+      console.warn('Audio playback failed:', error);
+    }
+  }, [getAudioContext]);
 
-    oscillator.type = 'square';
-    oscillator.frequency.value = 440; // A4
-    gainNode.gain.value = 0.05;
+  const playStartButtonSound = useCallback(() => {
+    try {
+      const audioContext = getAudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
-    oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.2);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    setTimeout(() => {
-      oscillator.stop();
-      audioContext.close();
-    }, 200);
-  };
+      oscillator.type = 'square';
+      oscillator.frequency.value = 440; // A4
+      gainNode.gain.value = 0.05;
 
-  const playCountdownSound = (count) => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.2);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+      setTimeout(() => {
+        oscillator.stop();
+      }, 200);
+    } catch (error) {
+      console.warn('Audio playback failed:', error);
+    }
+  }, [getAudioContext]);
 
-    oscillator.type = 'triangle';
-    // Higher pitch for countdown numbers, lower for "Go!"
-    oscillator.frequency.value = count > 0 ? 800 : 600;
-    gainNode.gain.value = 0.08;
+  const playCountdownSound = useCallback((count) => {
+    try {
+      const audioContext = getAudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
-    oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    setTimeout(() => {
-      oscillator.stop();
-      audioContext.close();
-    }, 300);
-  };
+      oscillator.type = 'triangle';
+      // Higher pitch for countdown numbers, lower for "Go!"
+      oscillator.frequency.value = count > 0 ? 800 : 600;
+      gainNode.gain.value = 0.08;
 
-  const playTimeoutSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+      setTimeout(() => {
+        oscillator.stop();
+      }, 300);
+    } catch (error) {
+      console.warn('Audio playback failed:', error);
+    }
+  }, [getAudioContext]);
 
-    oscillator.type = 'sawtooth';
-    oscillator.frequency.value = 200; // Low, ominous tone
-    gainNode.gain.value = 0.1;
+  const playTimeoutSound = useCallback(() => {
+    try {
+      const audioContext = getAudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
-    oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.8);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    setTimeout(() => {
-      oscillator.stop();
-      audioContext.close();
-    }, 800);
-  };
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 200; // Low, ominous tone
+      gainNode.gain.value = 0.1;
+
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.8);
+
+      setTimeout(() => {
+        oscillator.stop();
+      }, 800);
+    } catch (error) {
+      console.warn('Audio playback failed:', error);
+    }
+  }, [getAudioContext]);
 
   const startTimer = useCallback(() => {
     setTimeLeft(6); // 6 seconds to respond
