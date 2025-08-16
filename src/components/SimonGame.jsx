@@ -282,7 +282,20 @@ const SimonGame = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm relative">
+      {/* Fixed Timer Display - Upper Right */}
+      {timeLeft !== null && (
+        <div className="absolute top-3 right-3 z-10">
+          <div className={`px-3 py-1 rounded-full text-sm font-mono font-bold shadow-lg ${
+            timeLeft <= 3 
+              ? 'bg-red-500 text-white animate-pulse' 
+              : 'bg-blue-500 text-white'
+          }`}>
+            ⏰ {timeLeft}s
+          </div>
+        </div>
+      )}
+      
       <CardContent className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
@@ -301,13 +314,6 @@ const SimonGame = () => {
                 <p>{getHighScore()}</p>
               </div>
             </div>
-            {timeLeft !== null && (
-              <div className="text-center mt-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Time left: <span className={`font-mono ${timeLeft <= 3 ? 'text-red-500 font-bold' : 'text-blue-500'}`}>{timeLeft}s</span>
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="relative max-w-md mx-auto">
