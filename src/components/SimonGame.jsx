@@ -328,10 +328,14 @@ const SimonGame = () => {
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
-            <div className="grid grid-cols-3 gap-4 text-gray-700 dark:text-gray-300">
+            <div className="grid grid-cols-4 gap-4 text-gray-700 dark:text-gray-300">
               <div>
                 <p className="font-semibold">Games</p>
                 <p>{gameCount}/10</p>
+              </div>
+              <div>
+                <p className="font-semibold">Current</p>
+                <p className={isPlaying ? 'text-blue-600 dark:text-blue-400 font-bold' : ''}>{currentScore}</p>
               </div>
               <div>
                 <p className="font-semibold">Average</p>
@@ -353,8 +357,10 @@ const SimonGame = () => {
                   data-color={color}
                   disabled={!isPlaying || isShowingSequence}
                   onClick={() => handleColorClick(color)}
-                  className={`${colorMap[color]} h-32 rounded-lg transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed ${
-                    activeColors.has(color) ? 'opacity-100' : 'opacity-50'
+                  className={`${colorMap[color]} h-32 rounded-lg transition-all duration-200 disabled:cursor-not-allowed ${
+                    activeColors.has(color) 
+                      ? 'opacity-100 brightness-125 shadow-lg shadow-white/50' 
+                      : 'opacity-50 hover:opacity-75 hover:shadow-md hover:shadow-white/30'
                   }`}
                   aria-label={`${color} button`}
                 />
@@ -403,21 +409,27 @@ const SimonGame = () => {
             </Button>
           </div>
 
-          {gameHistory.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Game History</h3>
-              <div className="space-y-2">
-                {gameHistory.map((game, index) => (
-                  <div
-                    key={index}
-                    className={`p-2 rounded text-gray-800 dark:text-gray-100 ${game.won ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
-                  >
-                    Game {game.gameNumber}: Score {game.score} - {game.won ? 'Won!' : 'Lost'}
-                  </div>
-                ))}
-              </div>
+          <div className="mt-6">
+            <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Game History</h3>
+            <div className="h-64 overflow-y-auto">
+              {gameHistory.length > 0 ? (
+                <div className="space-y-2 pr-2">
+                  {gameHistory.map((game, index) => (
+                    <div
+                      key={index}
+                      className={`p-2 rounded text-gray-800 dark:text-gray-100 ${game.won ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
+                    >
+                      Game {game.gameNumber}: Score {game.score} - {game.won ? 'Won!' : 'Lost'}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">No games played yet</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
