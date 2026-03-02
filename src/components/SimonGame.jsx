@@ -263,20 +263,20 @@ const SimonGame = () => {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
             <div className="grid grid-cols-4 gap-4 text-gray-700 dark:text-gray-300">
               <div>
-                <p className="font-semibold">Games</p>
-                <p>{gameCount}/10</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Games</p>
+                <p className="text-lg font-bold">{gameCount}/10</p>
               </div>
               <div>
-                <p className="font-semibold">Current</p>
-                <p className={isPlaying ? 'text-blue-600 dark:text-blue-400 font-bold' : ''}>{currentScore}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current</p>
+                <p className={`text-lg font-bold ${isPlaying ? 'text-blue-600 dark:text-blue-400' : ''}`}>{currentScore}</p>
               </div>
               <div>
-                <p className="font-semibold">Average</p>
-                <p>{getAverageScore()}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Average</p>
+                <p className="text-lg font-bold">{getAverageScore()}</p>
               </div>
               <div>
-                <p className="font-semibold">High Score</p>
-                <p>{getHighScore()}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Best</p>
+                <p className="text-lg font-bold">{getHighScore()}</p>
               </div>
             </div>
           </div>
@@ -290,7 +290,7 @@ const SimonGame = () => {
                   data-color={color}
                   disabled={!isPlaying || isShowingSequence}
                   onClick={() => handleColorClick(color)}
-                  className={`${COLOR_CLASSES[color]} h-32 rounded-lg transition-all duration-200 disabled:cursor-not-allowed ${
+                  className={`${COLOR_CLASSES[color]} aspect-square rounded-lg transition-all duration-200 disabled:cursor-not-allowed ${
                     activeColors.has(color) 
                       ? 'opacity-100 brightness-125 shadow-lg shadow-white/50' 
                       : 'opacity-50 hover:opacity-75 hover:shadow-md hover:shadow-white/30'
@@ -342,23 +342,23 @@ const SimonGame = () => {
             </Button>
           </div>
 
-          <div className="mt-6">
-            <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Game History</h3>
-            <div className="h-64 overflow-y-auto">
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">History</h3>
+            <div className="h-48 overflow-y-auto">
               {gameHistory.length > 0 ? (
-                <div className="space-y-2 pr-2">
+                <div className="space-y-1.5 pr-2">
                   {gameHistory.map((game, index) => (
                     <div
                       key={index}
-                      className={`p-2 rounded text-gray-800 dark:text-gray-100 ${game.won ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}
+                      className={`p-2 rounded text-sm text-gray-800 dark:text-gray-100 border-l-4 ${game.won ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}
                     >
-                      Game {game.gameNumber}: Score {game.score} - {game.won ? 'Won!' : 'Lost'}
+                      Game {game.gameNumber}: Score {game.score} — {game.won ? 'Won!' : 'Lost'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                  <p className="text-sm">No games played yet</p>
+                <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                  <p className="text-xs">No games played yet</p>
                 </div>
               )}
             </div>
