@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from './ui/button';
 
 const COLORS = ['red', 'blue', 'green', 'yellow'];
+const LEVEL_TARGETS = [5, 10, 15, 20, Infinity];
 const COLOR_CLASSES = {
   red: 'bg-red-500',
   blue: 'bg-blue-500',
@@ -34,12 +35,30 @@ function createColorBag() {
 }
 
 const SimonGame = () => {
+  const [mode, setMode] = useState(() => {
+    return localStorage.getItem('simon-game-mode') || 'levels';
+  });
+  const [level, setLevel] = useState(() => {
+    const saved = localStorage.getItem('simon-game-level');
+    return saved ? JSON.parse(saved) : 1;
+  });
   const [sequence, setSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
-  const [gameCount, setGameCount] = useState(0);
-  const [gameHistory, setGameHistory] = useState([]);
+  const [gameCount, setGameCount] = useState(() => {
+    const saved = localStorage.getItem('simon-game-count');
+    return saved ? JSON.parse(saved) : 0;
+  });
+  const [gameHistory, setGameHistory] = useState(() => {
+    const saved = localStorage.getItem('simon-game-history');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [levelHistory, setLevelHistory] = useState(() => {
+    const saved = localStorage.getItem('simon-game-level-history');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [gameOver, setGameOver] = useState(false);
+  const [lastWon, setLastWon] = useState(false);
   const [currentScore, setCurrentScore] = useState(0);
   const [countdown, setCountdown] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
@@ -49,6 +68,20 @@ const SimonGame = () => {
   const sequenceRef = useRef([]);
   const playerSequenceRef = useRef([]);
   const colorBagRef = useRef(createColorBag());
+
+  useEffect(() => {
+    localStorage.setItem('simon-game-history', JSON.stringify(gameHistory));
+    localStorage.setItem('simon-game-count', JSON.stringify(gameCount));
+  }, [gameHistory, gameCount]);
+
+  useEffect(() => {
+    localStorage.setItem('simon-game-mode', mode);
+  }, [mode]);
+
+  useEffect(() => {
+    localStorage.setItem('simon-game-level', JSON.stringify(level));
+    localStorage.setItem('simon-game-level-history', JSON.stringify(levelHistory));
+  }, [level, levelHistory]);
 
   const audioContextRef = useRef(null);
   
@@ -112,15 +145,23 @@ const SimonGame = () => {
   const endGame = useCallback((won) => {
     setIsPlaying(false);
     setGameOver(true);
-    setTimeLeft(null); // Clear any active timer
+    setLastWon(won);
+    setTimeLeft(null);
     setIsFlashing(false);
-    setGameHistory(prev => [...prev, {
-      gameNumber: gameCount + 1,
-      score: currentScore,
-      won
-    }]);
-    setGameCount(prev => prev + 1);
-  }, [gameCount, currentScore]);
+    if (mode === 'levels') {
+      setLevelHistory(prev => [...prev, { level, score: currentScore, won }]);
+      if (won && level < 5) {
+        setLevel(prev => prev + 1);
+      }
+    } else {
+      setGameHistory(prev => [...prev, {
+        gameNumber: gameCount + 1,
+        score: currentScore,
+        won
+      }]);
+      setGameCount(prev => prev + 1);
+    }
+  }, [gameCount, currentScore, mode, level]);
 
   const timeoutGame = useCallback(() => {
     playTimeoutSound();
@@ -186,7 +227,8 @@ const SimonGame = () => {
     }
 
     if (newPlayerSequence.length === currentSequence.length) {
-      if (currentSequence.length === 20) {
+      const target = mode === 'levels' ? LEVEL_TARGETS[level - 1] : 20;
+      if (currentSequence.length >= target) {
         endGame(true);
         return;
       }
@@ -195,10 +237,10 @@ const SimonGame = () => {
         addToSequence();
       }, 1000);
     }
-  }, [isShowingSequence, isPlaying, playTone, endGame, addToSequence]);
+  }, [isShowingSequence, isPlaying, playTone, endGame, addToSequence, mode, level]);
 
   const startNewGame = () => {
-    if (gameCount >= 10) return;
+    if (mode === 'freeplay' && gameCount >= 10) return;
     playStartButtonSound();
     sequenceRef.current = [];
     setSequence([]);
@@ -206,6 +248,18 @@ const SimonGame = () => {
     setGameOver(false);
     setCurrentScore(0);
     setCountdown(3);
+  };
+
+  const switchMode = (newMode) => {
+    if (isPlaying || countdown !== null) return;
+    setMode(newMode);
+    setGameOver(false);
+  };
+
+  const getLevelBest = () => {
+    const entries = levelHistory.filter(e => e.level === level);
+    if (entries.length === 0) return 0;
+    return Math.max(...entries.map(e => e.score));
   };
 
   useEffect(() => {
@@ -263,43 +317,89 @@ const SimonGame = () => {
     return Math.max(...gameHistory.map(game => game.score));
   };
 
+  const levelTarget = LEVEL_TARGETS[level - 1];
+  const freeplayDone = mode === 'freeplay' && gameCount >= 10;
+
   return (
     <div className="w-full max-w-lg mx-auto relative">
-      {/* Fixed Timer Display - Upper Right */}
       {timeLeft !== null && (
         <div className="absolute top-3 right-3 z-10">
           <div className={`px-3 py-1 rounded-full text-sm font-mono font-bold shadow-lg ${
-            timeLeft <= 3 
-              ? 'bg-red-500 text-white animate-pulse' 
+            timeLeft <= 3
+              ? 'bg-red-500 text-white animate-pulse'
               : 'bg-blue-500 text-white'
           }`}>
             ⏰ {timeLeft}s
           </div>
         </div>
       )}
-      
-      <div className="p-4 sm:p-6 lg:p-8">
+
+      <div className="p-4 sm:p-6 lg:p-8 border-2 border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-800">
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
-            <div className="grid grid-cols-4 gap-4 text-gray-700 dark:text-gray-300">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Games</p>
-                <p className="text-lg font-bold">{gameCount}/10</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current</p>
-                <p className={`text-lg font-bold ${isPlaying ? 'text-blue-600 dark:text-blue-400' : ''}`}>{currentScore}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Average</p>
-                <p className="text-lg font-bold">{getAverageScore()}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Best</p>
-                <p className="text-lg font-bold">{getHighScore()}</p>
-              </div>
+            <div className="flex items-center justify-center gap-1 mb-2">
+              <button
+                onClick={() => switchMode('levels')}
+                className={`px-3 py-1 text-xs font-semibold rounded-l-full border transition-colors ${
+                  mode === 'levels'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                Levels
+              </button>
+              <button
+                onClick={() => switchMode('freeplay')}
+                className={`px-3 py-1 text-xs font-semibold rounded-r-full border transition-colors ${
+                  mode === 'freeplay'
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                Free Play
+              </button>
             </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
+
+            {mode === 'levels' ? (
+              <div className="grid grid-cols-4 gap-4 text-gray-700 dark:text-gray-300">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Level</p>
+                  <p className="text-lg font-bold">{level}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Target</p>
+                  <p className="text-lg font-bold">{levelTarget === Infinity ? '∞' : levelTarget}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current</p>
+                  <p className={`text-lg font-bold ${isPlaying ? 'text-blue-600 dark:text-blue-400' : ''}`}>{currentScore}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Best</p>
+                  <p className="text-lg font-bold">{getLevelBest()}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-4 text-gray-700 dark:text-gray-300">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Games</p>
+                  <p className="text-lg font-bold">{gameCount}/10</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Current</p>
+                  <p className={`text-lg font-bold ${isPlaying ? 'text-blue-600 dark:text-blue-400' : ''}`}>{currentScore}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Average</p>
+                  <p className="text-lg font-bold">{getAverageScore()}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Best</p>
+                  <p className="text-lg font-bold">{getHighScore()}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="relative max-w-md mx-auto">
@@ -332,14 +432,29 @@ const SimonGame = () => {
               </div>
             )}
 
-            {/* Game Over Overlay */}
-            {gameOver && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-                <div className="bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 rounded-xl px-6 py-4 shadow-lg max-w-xs">
-                  <p className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center">
-                    Game Over! Final Score: {currentScore}
-                  </p>
-                </div>
+            {!isPlaying && countdown === null && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg gap-3">
+                {gameOver && (
+                  <div className="text-center bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-lg">
+                    {mode === 'levels' && lastWon ? (
+                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">Level Complete!</p>
+                    ) : (
+                      <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">Score: {currentScore}</p>
+                    )}
+                  </div>
+                )}
+                <Button
+                  onClick={startNewGame}
+                  disabled={freeplayDone}
+                  className="text-lg px-10 py-6 shadow-lg bg-white text-gray-900 hover:bg-gray-100 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                >
+                  {freeplayDone
+                    ? 'All Games Completed'
+                    : mode === 'levels'
+                      ? (gameOver && !lastWon ? `Retry Level ${level}` : `Start Level ${level}`)
+                      : (gameCount === 0 ? 'Start Game' : 'Play Again')
+                  }
+                </Button>
               </div>
             )}
 
@@ -353,34 +468,62 @@ const SimonGame = () => {
             )}
           </div>
 
-          <div className="text-center">
-            <Button
-              onClick={startNewGame}
-              disabled={gameCount >= 10 || isPlaying || countdown !== null}
-              className="mt-4"
-            >
-              {gameCount >= 10 ? 'All Games Completed' : 'Start New Game'}
-            </Button>
-          </div>
-
           <div className="mt-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">History</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">History</h3>
+              {!isPlaying && (mode === 'levels' ? levelHistory.length > 0 : gameHistory.length > 0) && (
+                <button
+                  onClick={() => {
+                    if (mode === 'levels') {
+                      setLevelHistory([]);
+                      setLevel(1);
+                    } else {
+                      setGameHistory([]);
+                      setGameCount(0);
+                    }
+                    setGameOver(false);
+                  }}
+                  className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
             <div className="h-48 overflow-y-auto">
-              {gameHistory.length > 0 ? (
-                <div className="space-y-1.5 pr-2">
-                  {gameHistory.map((game, index) => (
-                    <div
-                      key={index}
-                      className={`p-2 rounded text-sm text-gray-800 dark:text-gray-100 border-l-4 ${game.won ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}
-                    >
-                      Game {game.gameNumber}: Score {game.score} — {game.won ? 'Won!' : 'Lost'}
-                    </div>
-                  ))}
-                </div>
+              {mode === 'levels' ? (
+                levelHistory.length > 0 ? (
+                  <div className="space-y-1.5 pr-2">
+                    {levelHistory.map((entry, index) => (
+                      <div
+                        key={index}
+                        className={`p-2 rounded text-sm text-gray-800 dark:text-gray-100 border-l-4 ${entry.won ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}
+                      >
+                        Level {entry.level}: Score {entry.score} — {entry.won ? 'Cleared!' : 'Failed'}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                    <p className="text-xs">No games played yet</p>
+                  </div>
+                )
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
-                  <p className="text-xs">No games played yet</p>
-                </div>
+                gameHistory.length > 0 ? (
+                  <div className="space-y-1.5 pr-2">
+                    {gameHistory.map((game, index) => (
+                      <div
+                        key={index}
+                        className={`p-2 rounded text-sm text-gray-800 dark:text-gray-100 border-l-4 ${game.won ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}
+                      >
+                        Game {game.gameNumber}: Score {game.score} — {game.won ? 'Won!' : 'Lost'}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
+                    <p className="text-xs">No games played yet</p>
+                  </div>
+                )
               )}
             </div>
           </div>
