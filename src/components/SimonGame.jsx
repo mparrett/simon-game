@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 
 const SimonGame = () => {
   const [sequence, setSequence] = useState([]);
-  const [playerSequence, setPlayerSequence] = useState([]);
+  const [, setPlayerSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [gameCount, setGameCount] = useState(0);
@@ -15,6 +15,9 @@ const SimonGame = () => {
   const [timeLeft, setTimeLeft] = useState(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const [activeColors, setActiveColors] = useState(new Set());
+
+  const sequenceRef = useRef([]);
+  const playerSequenceRef = useRef([]);
 
   const colors = useMemo(() => ['red', 'blue', 'green', 'yellow'], []);
   const colorMap = useMemo(() => ({
@@ -115,71 +118,72 @@ const SimonGame = () => {
 
   const addToSequence = useCallback(() => {
     const newColor = colors[Math.floor(Math.random() * colors.length)];
-    setSequence(prev => [...prev, newColor]);
+    setSequence(prev => {
+      const next = [...prev, newColor];
+      sequenceRef.current = next;
+      return next;
+    });
     setCurrentScore(prev => prev + 1);
   }, [colors]);
 
   const playSequence = useCallback(async () => {
     setIsShowingSequence(true);
 
-    // Wait a brief moment before starting sequence
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    for (let i = 0; i < sequence.length; i++) {
-      const color = sequence[i];
-      
-      // Make button fully visible during flash
+    const currentSequence = sequenceRef.current;
+    for (let i = 0; i < currentSequence.length; i++) {
+      const color = currentSequence[i];
+
       setActiveColors(new Set([color]));
       playSound(soundMap[color]);
 
-      // Wait longer to show each color
       await new Promise(resolve => setTimeout(resolve, 750));
 
-      // Reset opacity
       setActiveColors(new Set());
 
-      // Pause between colors
       await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     setIsShowingSequence(false);
-    startTimer(); // Start the countdown timer for player input
-  }, [sequence, soundMap, startTimer, playSound]);
+    startTimer();
+  }, [soundMap, startTimer, playSound]);
 
-  const handleColorClick = (color) => {
+  const handleColorClick = useCallback((color) => {
     if (isShowingSequence || !isPlaying) return;
 
-    // Clear the timer since player made a move
     setTimeLeft(null);
     setIsFlashing(false);
 
-    // Flash the button using React state
     setActiveColors(new Set([color]));
     setTimeout(() => {
       setActiveColors(new Set());
     }, 200);
 
-    const newPlayerSequence = [...playerSequence, color];
+    const newPlayerSequence = [...playerSequenceRef.current, color];
+    playerSequenceRef.current = newPlayerSequence;
     setPlayerSequence(newPlayerSequence);
     playSound(soundMap[color]);
 
+    const currentSequence = sequenceRef.current;
     const currentIndex = newPlayerSequence.length - 1;
-    if (color !== sequence[currentIndex]) {
+    if (color !== currentSequence[currentIndex]) {
       endGame(false);
       return;
     }
 
-    if (newPlayerSequence.length === sequence.length) {
-      if (sequence.length === 20) {
+    if (newPlayerSequence.length === currentSequence.length) {
+      if (currentSequence.length === 20) {
         endGame(true);
         return;
       }
       setTimeout(() => {
+        playerSequenceRef.current = [];
         setPlayerSequence([]);
         addToSequence();
       }, 1000);
     }
-  };
+  }, [isShowingSequence, isPlaying, playSound, soundMap, endGame, addToSequence]);
 
   const startCountdown = () => {
     setCountdown(3);
@@ -190,7 +194,9 @@ const SimonGame = () => {
       return;
     }
     playStartButtonSound();
+    sequenceRef.current = [];
     setSequence([]);
+    playerSequenceRef.current = [];
     setPlayerSequence([]);
     setGameOver(false);
     setCurrentScore(0);
