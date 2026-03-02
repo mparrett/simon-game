@@ -1,10 +1,23 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 
+const COLORS = ['red', 'blue', 'green', 'yellow'];
+const COLOR_CLASSES = {
+  red: 'bg-red-500',
+  blue: 'bg-blue-500',
+  green: 'bg-green-500',
+  yellow: 'bg-yellow-500'
+};
+const COLOR_FREQUENCIES = {
+  red: 261.63,    // C4
+  blue: 329.63,   // E4
+  green: 392.00,  // G4
+  yellow: 523.25  // C5
+};
+
 const SimonGame = () => {
   const [sequence, setSequence] = useState([]);
-  const [, setPlayerSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [gameCount, setGameCount] = useState(0);
@@ -19,22 +32,6 @@ const SimonGame = () => {
   const sequenceRef = useRef([]);
   const playerSequenceRef = useRef([]);
 
-  const colors = useMemo(() => ['red', 'blue', 'green', 'yellow'], []);
-  const colorMap = useMemo(() => ({
-    red: 'bg-red-500',
-    blue: 'bg-blue-500',
-    green: 'bg-green-500',
-    yellow: 'bg-yellow-500'
-  }), []);
-
-  const soundMap = useMemo(() => ({
-    red: 261.63,    // C4
-    blue: 329.63,   // E4
-    green: 392.00,  // G4
-    yellow: 523.25  // C5
-  }), []);
-
-  // Shared AudioContext hook to prevent memory leaks
   const audioContextRef = useRef(null);
   
   const getAudioContext = useCallback(() => {
@@ -77,10 +74,6 @@ const SimonGame = () => {
     }
   }, [getAudioContext]);
 
-  const playSound = useCallback((frequency) => {
-    playTone({ frequency });
-  }, [playTone]);
-
   const playStartButtonSound = useCallback(() => {
     playTone({ frequency: 440, type: 'square', gain: 0.05, duration: 200 });
   }, [playTone]);
@@ -117,14 +110,14 @@ const SimonGame = () => {
   }, [playTimeoutSound, endGame]);
 
   const addToSequence = useCallback(() => {
-    const newColor = colors[Math.floor(Math.random() * colors.length)];
+    const newColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     setSequence(prev => {
       const next = [...prev, newColor];
       sequenceRef.current = next;
       return next;
     });
     setCurrentScore(prev => prev + 1);
-  }, [colors]);
+  }, []);
 
   const playSequence = useCallback(async () => {
     setIsShowingSequence(true);
@@ -136,7 +129,7 @@ const SimonGame = () => {
       const color = currentSequence[i];
 
       setActiveColors(new Set([color]));
-      playSound(soundMap[color]);
+      playTone({ frequency: COLOR_FREQUENCIES[color] });
 
       await new Promise(resolve => setTimeout(resolve, 750));
 
@@ -147,7 +140,7 @@ const SimonGame = () => {
 
     setIsShowingSequence(false);
     startTimer();
-  }, [soundMap, startTimer, playSound]);
+  }, [startTimer, playTone]);
 
   const handleColorClick = useCallback((color) => {
     if (isShowingSequence || !isPlaying) return;
@@ -162,8 +155,7 @@ const SimonGame = () => {
 
     const newPlayerSequence = [...playerSequenceRef.current, color];
     playerSequenceRef.current = newPlayerSequence;
-    setPlayerSequence(newPlayerSequence);
-    playSound(soundMap[color]);
+    playTone({ frequency: COLOR_FREQUENCIES[color] });
 
     const currentSequence = sequenceRef.current;
     const currentIndex = newPlayerSequence.length - 1;
@@ -179,28 +171,20 @@ const SimonGame = () => {
       }
       setTimeout(() => {
         playerSequenceRef.current = [];
-        setPlayerSequence([]);
         addToSequence();
       }, 1000);
     }
-  }, [isShowingSequence, isPlaying, playSound, soundMap, endGame, addToSequence]);
-
-  const startCountdown = () => {
-    setCountdown(3);
-  };
+  }, [isShowingSequence, isPlaying, playTone, endGame, addToSequence]);
 
   const startNewGame = () => {
-    if (gameCount >= 10) {
-      return;
-    }
+    if (gameCount >= 10) return;
     playStartButtonSound();
     sequenceRef.current = [];
     setSequence([]);
     playerSequenceRef.current = [];
-    setPlayerSequence([]);
     setGameOver(false);
     setCurrentScore(0);
-    startCountdown();
+    setCountdown(3);
   };
 
   useEffect(() => {
@@ -300,13 +284,13 @@ const SimonGame = () => {
           <div className="relative max-w-md mx-auto">
             {/* Game Board */}
             <div className={`grid grid-cols-2 gap-4 transition-all duration-300 ${isFlashing ? 'ring-4 ring-red-500 ring-opacity-60' : ''}`}>
-              {colors.map(color => (
+              {COLORS.map(color => (
                 <button
                   key={color}
                   data-color={color}
                   disabled={!isPlaying || isShowingSequence}
                   onClick={() => handleColorClick(color)}
-                  className={`${colorMap[color]} h-32 rounded-lg transition-all duration-200 disabled:cursor-not-allowed ${
+                  className={`${COLOR_CLASSES[color]} h-32 rounded-lg transition-all duration-200 disabled:cursor-not-allowed ${
                     activeColors.has(color) 
                       ? 'opacity-100 brightness-125 shadow-lg shadow-white/50' 
                       : 'opacity-50 hover:opacity-75 hover:shadow-md hover:shadow-white/30'
