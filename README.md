@@ -1,12 +1,28 @@
+<p align="center">
+  <img src="simon-logo.png" alt="Simon" width="180">
+</p>
+
 # Simon Game
 
-Please visit the [game page](https://mparrett.github.io/simon-game/) to give it a shot!
+A browser-based Simon memory game. Watch the sequence, repeat it back, and see how far you can go.
 
-# React + Vite
+**[Play it here](https://mparrett.github.io/simon-game/)**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Features
 
-Currently, two official plugins are available:
+- 10 games per session with score tracking (current, average, best)
+- Web Audio tones for each color with countdown and timeout sounds
+- 6-second response timer with visual countdown
+- Balanced color distribution using chunked shuffle bags
+- Light and dark mode support
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Development
+
+```bash
+npm install
+npm run dev       # Start dev server at localhost:5173
+npm run build     # Production build
+npm run lint      # Run ESLint
+```
+
+Deploys automatically to GitHub Pages on push to `main`.
