@@ -242,7 +242,7 @@ const SimonGame = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto rounded-xl shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm relative">
+    <div className="w-full max-w-lg mx-auto relative">
       {/* Fixed Timer Display - Upper Right */}
       {timeLeft !== null && (
         <div className="absolute top-3 right-3 z-10">
