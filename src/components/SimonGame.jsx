@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 
 const COLORS = ['red', 'blue', 'green', 'yellow'];
@@ -243,7 +242,7 @@ const SimonGame = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm relative">
+    <div className="w-full max-w-lg mx-auto rounded-xl shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm relative">
       {/* Fixed Timer Display - Upper Right */}
       {timeLeft !== null && (
         <div className="absolute top-3 right-3 z-10">
@@ -257,7 +256,7 @@ const SimonGame = () => {
         </div>
       )}
       
-      <CardContent className="p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-4 sm:space-y-6">
           <div className="text-center space-y-3">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">Simon Game</h2>
@@ -364,8 +363,8 @@ const SimonGame = () => {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
