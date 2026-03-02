@@ -15,6 +15,24 @@ const COLOR_FREQUENCIES = {
   yellow: 523.25  // C5
 };
 
+function shuffled(array) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Build a bag of 200 colors from shuffled 8-color chunks (2 of each color per chunk).
+// This prevents streaky runs that pure Math.random() produces with only 4 colors,
+// while keeping each short span feeling unpredictable.
+function createColorBag() {
+  const bag = [];
+  for (let i = 0; i < 25; i++) bag.push(...shuffled([...COLORS, ...COLORS]));
+  return bag;
+}
+
 const SimonGame = () => {
   const [sequence, setSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -30,6 +48,7 @@ const SimonGame = () => {
 
   const sequenceRef = useRef([]);
   const playerSequenceRef = useRef([]);
+  const colorBagRef = useRef(createColorBag());
 
   const audioContextRef = useRef(null);
   
@@ -109,7 +128,10 @@ const SimonGame = () => {
   }, [playTimeoutSound, endGame]);
 
   const addToSequence = useCallback(() => {
-    const newColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    if (colorBagRef.current.length === 0) {
+      colorBagRef.current = createColorBag();
+    }
+    const newColor = colorBagRef.current.pop();
     setSequence(prev => {
       const next = [...prev, newColor];
       sequenceRef.current = next;
