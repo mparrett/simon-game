@@ -50,7 +50,7 @@ const SimonGame = () => {
     };
   }, []);
 
-  const playSound = useCallback((frequency) => {
+  const playTone = useCallback(({ frequency, type = 'sine', gain = 0.1, duration = 500 }) => {
     try {
       const audioContext = getAudioContext();
       const oscillator = audioContext.createOscillator();
@@ -59,93 +59,36 @@ const SimonGame = () => {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      oscillator.type = 'sine';
+      oscillator.type = type;
       oscillator.frequency.value = frequency;
-      gainNode.gain.value = 0.1;
+      gainNode.gain.value = gain;
 
       oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration / 1000);
 
       setTimeout(() => {
         oscillator.stop();
-      }, 500);
+      }, duration);
     } catch (error) {
       console.warn('Audio playback failed:', error);
     }
   }, [getAudioContext]);
+
+  const playSound = useCallback((frequency) => {
+    playTone({ frequency });
+  }, [playTone]);
 
   const playStartButtonSound = useCallback(() => {
-    try {
-      const audioContext = getAudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'square';
-      oscillator.frequency.value = 440; // A4
-      gainNode.gain.value = 0.05;
-
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.2);
-
-      setTimeout(() => {
-        oscillator.stop();
-      }, 200);
-    } catch (error) {
-      console.warn('Audio playback failed:', error);
-    }
-  }, [getAudioContext]);
+    playTone({ frequency: 440, type: 'square', gain: 0.05, duration: 200 });
+  }, [playTone]);
 
   const playCountdownSound = useCallback((count) => {
-    try {
-      const audioContext = getAudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'triangle';
-      // Higher pitch for countdown numbers, lower for "Go!"
-      oscillator.frequency.value = count > 0 ? 800 : 600;
-      gainNode.gain.value = 0.08;
-
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
-
-      setTimeout(() => {
-        oscillator.stop();
-      }, 300);
-    } catch (error) {
-      console.warn('Audio playback failed:', error);
-    }
-  }, [getAudioContext]);
+    playTone({ frequency: count > 0 ? 800 : 600, type: 'triangle', gain: 0.08, duration: 300 });
+  }, [playTone]);
 
   const playTimeoutSound = useCallback(() => {
-    try {
-      const audioContext = getAudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.value = 200; // Low, ominous tone
-      gainNode.gain.value = 0.1;
-
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.8);
-
-      setTimeout(() => {
-        oscillator.stop();
-      }, 800);
-    } catch (error) {
-      console.warn('Audio playback failed:', error);
-    }
-  }, [getAudioContext]);
+    playTone({ frequency: 200, type: 'sawtooth', duration: 800 });
+  }, [playTone]);
 
   const startTimer = useCallback(() => {
     setTimeLeft(6); // 6 seconds to respond
