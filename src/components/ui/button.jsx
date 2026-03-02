@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
 
+// eslint-disable-next-line react/prop-types
 const Button = React.forwardRef(({ className, ...props }, ref) => {
   return (
     <button
